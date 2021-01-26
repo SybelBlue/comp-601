@@ -1,4 +1,3 @@
--- {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TupleSections #-}
 
@@ -23,7 +22,7 @@ pos = (,)
 addPos :: Pos -> Pos -> Pos
 addPos (a, i) (b, j) = (a + b, i + j)
 
-data BoardTile = Ice | Rock | Diamond | Turtle deriving Show
+data BoardTile = Ice | Rock | Diamond | Turtle
 
 charToTile :: Char -> Maybe BoardTile
 charToTile 'C' = Just Rock
@@ -39,7 +38,7 @@ tilePositions :: [[Maybe BoardTile]] -> [(Pos, BoardTile)]
 tilePositions board = concat $ map repack $ reverse . enumerate . reverse $ map enumerate board
     where repack (r, row) = mapMaybe (\(c, mTile) -> (pos r c, ) <$> mTile) row
 
-data Dir = U | D | R | L deriving Show
+data Dir = U | D | R | L
 
 dirDelta :: Dir -> Pos
 dirDelta U = ( 1,  0)
@@ -60,13 +59,12 @@ turnLeft D = R
 turnLeft R = U
 
 data Board = Board
-    { rocks :: [Pos]
-    , ice :: [Pos]
-    , diamond :: Pos
-    , turtle :: Pos
-    , dir :: Dir
+    { rocks   :: [Pos]
+    , ice     :: [Pos]
+    , diamond ::  Pos
+    , turtle  ::  Pos
+    , dir     ::  Dir
     }
-    deriving Show
 
 blank :: Board
 blank = Board { rocks = [], ice = [], diamond = (0, 0), turtle = (0, 0), dir = R }
@@ -92,7 +90,7 @@ canMoveForward (board @ Board { rocks, ice, turtle, dir }) = not $ nextTurtlePos
 canFire :: Board -> Bool
 canFire (board @ Board { ice }) = nextTurtlePos board `elem` ice
 
-data Command = Forward | TurnRight | TurnLeft | Fire deriving Show
+data Command = Forward | TurnRight | TurnLeft | Fire
 
 charToCommand :: Char -> Command
 charToCommand 'F' = Forward
@@ -113,7 +111,7 @@ executeCommand Fire (board @ Board { ice }) =
     if canFire board
         then Just (board { ice = delete (nextTurtlePos board) ice })
         else Nothing
-executeCommand TurnLeft (board @ Board { dir }) = Just (board { dir = turnLeft dir })
+executeCommand TurnLeft  (board @ Board { dir }) = Just (board { dir = turnLeft  dir })
 executeCommand TurnRight (board @ Board { dir }) = Just (board { dir = turnRight dir })
 
 runCommands :: [Command] -> Board -> Maybe Board
@@ -121,7 +119,7 @@ runCommands []     = return
 runCommands (c:cs) = executeCommand c >=> runCommands cs
 
 interpretResult :: Maybe Board -> String
-interpretResult (Just (Board { turtle, diamond }))
+interpretResult (Just Board { turtle, diamond })
     | turtle == diamond = "Diamond!"
 interpretResult _       = "Bug!"
 
