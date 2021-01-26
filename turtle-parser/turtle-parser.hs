@@ -38,7 +38,7 @@ tilePositions :: [[Maybe BoardTile]] -> [(Pos, BoardTile)]
 tilePositions board = concat $ map repack $ reverse . enumerate . reverse $ map enumerate board
     where repack (r, row) = mapMaybe (\(c, mTile) -> (pos r c, ) <$> mTile) row
 
-data Dir = U | D | R | L
+data Dir = U | D | R | L deriving Show
 
 dirDelta :: Dir -> Pos
 dirDelta U = ( 1,  0)
@@ -102,24 +102,30 @@ charToCommand  c  = error $ "Unkown turtle command " ++ [c]
 readCommands :: IO [Command]
 readCommands = map charToCommand <$> getLine
 
-executeCommand :: Command -> Board -> Maybe Board
+type TurtleResult = Either TurtleError Board
+type TurtleError = (String, Pos, Dir)
+
+turtleError :: Board -> String -> TurtleResult
+turtleError board = Left . (, turtle board, dir board)
+
+executeCommand :: Command -> Board -> TurtleResult
 executeCommand Forward board =
     if canMoveForward board 
-        then Just (board { turtle = nextTurtlePos board })
-        else Nothing
+        then return (board { turtle = nextTurtlePos board })
+        else turtleError board "Collision"
 executeCommand Fire (board @ Board { ice }) =
     if canFire board
-        then Just (board { ice = delete (nextTurtlePos board) ice })
-        else Nothing
-executeCommand TurnLeft  (board @ Board { dir }) = Just (board { dir = turnLeft  dir })
-executeCommand TurnRight (board @ Board { dir }) = Just (board { dir = turnRight dir })
+        then return (board { ice = delete (nextTurtlePos board) ice })
+        else turtleError board "Laser Missed"
+executeCommand TurnLeft  (board @ Board { dir }) = return (board { dir = turnLeft  dir })
+executeCommand TurnRight (board @ Board { dir }) = return (board { dir = turnRight dir })
 
-runCommands :: [Command] -> Board -> Maybe Board
+runCommands :: [Command] -> Board -> TurtleResult
 runCommands []     = return
 runCommands (c:cs) = executeCommand c >=> runCommands cs
 
-interpretResult :: Maybe Board -> String
-interpretResult (Just Board { turtle, diamond })
+interpretResult :: TurtleResult -> String
+interpretResult (Right Board { turtle, diamond })
     | turtle == diamond = "Diamond!"
 interpretResult _       = "Bug!"
 
